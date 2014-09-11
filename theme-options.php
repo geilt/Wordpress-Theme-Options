@@ -94,19 +94,25 @@ class SimpulThemeOptions {
         if ( !isset( $_REQUEST['settings-updated'] ) ):
             $_REQUEST['settings-updated'] = false;
         endif;
+        $this->options = self::getThemeOptions();
         ?>
         <div class="wrap">
             <?php screen_icon(); echo "<h2>" . get_current_theme() . __( ' Theme Options', $this->namespace . '_theme' ) . "</h2>"; ?>
+            <h2 class="nav-tab-wrapper">
+            <?php $i = 0; ?>
+            <?php foreach($this->sections as $section => $fields): ?>
+                <a href="#<?php echo $section; ?>" class="nav-tab<?php if($i === 0) echo ' nav-tab-active'; ?>"><?php echo self::getLabel($section); ?></a>
+                <?php $i++; ?>
+            <?php endforeach; ?>
+            </h2>
             <?php if ( false !== $_REQUEST['settings-updated'] ) : ?>
             <div class="updated fade"><p><strong><?php _e( 'Options saved', $this->namespace . '_theme' ); ?></strong></p></div>
             <?php endif; ?>
             <form method="post" action="options.php">
                 <?php 
                 settings_fields( $this->namespace . '_options' );
-                $options = self::getThemeOptions();
                 ?>
-                <?php if(!empty($this->sliders)) self::slider($options); ?>
-                <?php if(!empty($this->sections)) self::sections($this->sections, $options); ?>
+                <?php if(!empty($this->sections)) self::sections($this->sections); ?>
                 <p class="submit">
                     <input type="submit" class="button-primary" value="<?php _e( 'Save Options', $this->namespace . '_theme' ); ?>" />
                 </p>
@@ -161,6 +167,13 @@ class SimpulThemeOptions {
             $GLOBALS['simpul_meta_upload'] = true;
             $script = '
             <script type="text/javascript">
+                jQuery(document).on(\'click\', \'.nav-tab\', function(e){
+                    e.preventDefault();
+                    jQuery(\'.nav-tab\').removeClass(\'nav-tab-active\');
+                    jQuery(this).addClass(\'nav-tab-active\');
+                    jQuery(\'.sections\').hide();
+                    jQuery(jQuery(this).attr(\'href\')).show();
+                });
                 var original_send_to_editor = "";  
                 var modified_send_to_editor = "";
                 var formfield = "";
@@ -195,181 +208,122 @@ class SimpulThemeOptions {
             echo $script;
         endif;
     }
-    function slider($options){
-        $fields = array(
-            'image' => 'src',
-            'image_link' => 'text', 
-            'title' => 'text'
-        );
-        ?>
-
-        <table class="form-table">
-        <th colspan="2"><h2>Home Slider Options</h2></th>
-        <tr valign="top"><th scope="row"><?php _e( 'Number of Sliders', $this->namespace . '_theme' ); ?></th>
-            <td>
-                <input id="<?php echo $this->namespace; ?>_theme_options[slider_number]" class="regular-text" type="text" name="<?php echo $this->namespace; ?>_theme_options[slider_number]" value="<?php esc_attr_e( $options['slider_number'] ); ?>" />
-                <label class="description" for="<?php echo $this->namespace; ?>_theme_options[slider_number]"><?php _e( '', $this->namespace . '_theme' ); ?></label>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <p class="submit">
-                    <input type="submit" class="button-primary" value="<?php _e( 'Save Options', $this->namespace . '_theme' ); ?>" />
-                </p>
-            </td>
-        </tr>
-            
-        <?php
-        
-        $j = 0;
-        
-        for($i = 1; $i <= $options['slider_number']; $i++) :
-        
-            ?><th><h3>Slider <?php echo $i; ?></h3></th><?php
-        
-            foreach($fields as $field => $type) :
-                switch($type) :
-                    case 'text':
-                        ?>
-                        <tr valign="top"><th scope="row"><?php _e( 'Slider ' . $i . " " . $this->getLabel($field) . ": ", $this->namespace . '_theme' ); ?></th>
-                            <td>
-                                <input id="<?php echo $this->namespace; ?>_theme_options[<?php echo $i ?>][<?php echo $field ?>]" class="regular-text" type="text" name="<?php echo $this->namespace; ?>_theme_options[<?php echo $i ?>][<?php echo $field ?>]" value="<?php esc_attr_e( $options[$i][$field] ); ?>" />
-                                <label class="description" for="<?php echo $this->namespace; ?>_theme_options[<?php echo $i ?>][<?php echo $field ?>]"><?php _e( '', $this->namespace . '_theme' ); ?></label>
-                            </td>
-                        </tr>
-                    <?php
-                        break;
-                    case 'src':
-                        $j++;
-                        ?>
-                        <tr valign="top"><th scope="row"><?php _e( 'Slider ' . $i . " " . $this->getLabel($field) . ": ", $this->namespace . '_theme' ); ?></th>
-                            <td>
-                                <input id="<?php echo $this->namespace; ?>_theme_options_<?php echo $i ?>_<?php echo $field ?>" class="regular-text <?php echo $this->namespace; ?>_theme_options_<?php echo $i ?>_<?php echo $field ?>" type="text" name="<?php echo $this->namespace; ?>_theme_options[<?php echo $i ?>][<?php echo $field ?>]" value="<?php esc_attr_e( $options[$i][$field] ); ?>" />
-                                <label class="description" for="<?php echo $this->namespace; ?>_theme_options[<?php echo $i ?>][<?php echo $field ?>]"><?php _e( '', $this->namespace . '_theme' ); ?></label>
-                                <button data-input="<?php echo $this->namespace; ?>_theme_options_<?php echo $i ?>_<?php echo $field ?>" class="simpul_meta_upload button-secondary" name="<?php echo $this->namespace; ?>_theme_options_src_<?php echo $i . '_' . $j ?>" type="button">Browse</button>
-                            </td>
-                        </tr>
-                    <?php
-                        break;
-                    case 'textarea':
-                        ?>
-                        <tr valign="top"><th scope="row"><?php _e( 'Slider ' . $i . " " . $this->getLabel($field) . ": ", $this->namespace . '_theme' ); ?></th>
-                            <td>
-                                <textarea id="<?php echo $this->namespace; ?>_theme_options[<?php echo $i ?>][<?php echo $field ?>]" class="large-text" cols="50" rows="10" name="<?php echo $this->namespace; ?>_theme_options[<?php echo $i ?>][<?php echo $field ?>]"><?php echo esc_textarea( $options[$i][$field] ); ?></textarea>
-                                <label class="description" for="<?php echo $this->namespace; ?>_theme_options[<?php echo $i ?>][<?php echo $field ?>]"><?php _e( '', $this->namespace . '_theme' ); ?></label>
-                            </td>
-                        </tr>
-                    <?php
-                        break;
-                endswitch;
-            endforeach;
-        endfor; ?>
-        </table>
-        <?php
-    }
-    function sections($sections, $options){
+    function sections($sections){
+        $i = 0;
         foreach($sections as $section => $fields):
+            echo '<div class="sections" id="' . $section .  '"' . (($i !== 0) ? ' style="display: none"' : '') . '>';
             echo '<h2>' . self::getLabel($section) . '</h2>';
             echo '<table class="form-table">';
             foreach($fields as $field => $format):
-                self::format($options, $section, $field, $format);
+                self::format($section, $field, $format);
             endforeach;
             echo '</table>';
+            echo '</div>';
+            $i++;
         endforeach;
 
     }
-    function format($options, $section, $field, $format){
-        $fieldName = $this->namespace . '_theme_options[' . $section . '][' . $field . ']';
-        $fieldValue = !empty($options[$section][$field]) ? $options[$section][$field] : '';
-        $className = $this->namespace . '_theme_options_' . $section . '_' . $field;
-        switch($format) :
-            case 'text':
-                ?>
-                <tr valign="top"><th scope="row"><?php _e( $this->getLabel($field) . ": ", $this->namespace . '_theme' ); ?></th>
-                    <td>
-                        <input id="<?php echo $fieldName; ?>" class="regular-text" type="text" name="<?php echo $fieldName; ?>" value="<?php esc_attr_e( $fieldValue ); ?>" />
-                    </td>
-                </tr>
+    function format($section, $field, $format){
+       $fieldVars = self::setFieldVars($section, $field, $format);
+        if(method_exists($this, $fieldVars->format)):
+            ?>
+            <tr valign="top">
+                <th scope="row"><?php _e( $this->getLabel($fieldVars->field) . ": ", $this->namespace . '_theme' ); ?></th>
+                <td style="vertical-align: top;"><?php $this->$format($fieldVars); ?></td>
+            </tr>
             <?php
-                break;
-            case 'link':
-                ?>
-                <tr valign="top"><th scope="row"><?php _e( $this->getLabel($field) . ": ", $this->namespace . '_theme' ); ?></th>
-                    <td>
-                        <input placeholder="Link" id="<?php echo $fieldName; ?>[link]" class="regular-text" type="text" name="<?php echo $fieldName; ?>[link]" value="<?php esc_attr_e( $fieldValue['link'] ); ?>" />
-                        <input placeholder="Label" id="<?php echo $fieldName; ?>[label]" class="regular-text" type="text" name="<?php echo $fieldName; ?>[label]" value="<?php esc_attr_e( $fieldValue['label'] ); ?>" /> Label
-                    </td>
-                </tr>
-            <?php
-                break;
-            case 'src':
-                ?>
-                <tr valign="top"><th scope="row"><?php _e( $this->getLabel($field) . ": ", $this->namespace . '_theme' ); ?></th>
-                    <td>
-                        <input id="<?php echo $className; ?>" class="regular-text <?php echo $className; ?>" type="text" name="<?php echo $fieldName; ?>" value="<?php esc_attr_e( $fieldValue ); ?>" />
-                        <button data-input="<?php echo $className; ?>" class="simpul_meta_upload button-secondary" type="button">Browse</button>
-                    </td>
-                </tr>
-            <?php
-                break;
-            case 'imagelink':
-                ?>
-                <tr valign="top"><th scope="row"><?php _e( $this->getLabel($field) . ": ", $this->namespace . '_theme' ); ?></th>
-                    <td>
-                        <input placeholder="Image" id="<?php echo $className; ?>" class="regular-text <?php echo $className; ?>" type="text" name="<?php echo $fieldName; ?>[image]" value="<?php esc_attr_e( $fieldValue['image'] ); ?>" />
-                        <button data-input="<?php echo $className; ?>" class="simpul_meta_upload button-secondary" type="button">Browse</button><br>
-                        <input placeholder="Link" id="<?php echo $fieldName; ?>[link]" class="regular-text" type="text" name="<?php echo $fieldName; ?>[link]" value="<?php esc_attr_e( $fieldValue['link'] ); ?>" /> Link
-                    </td>
-                </tr>
-            <?php
-                break;
-            case 'imagelinkquote':
-                ?>
-                <tr valign="top"><th scope="row"><?php _e( $this->getLabel($field) . ": ", $this->namespace . '_theme' ); ?></th>
-                    <td>
-                        <input placeholder="Image" id="<?php echo $className; ?>" class="regular-text <?php echo $className; ?>" type="text" name="<?php echo $fieldName; ?>[image]" value="<?php esc_attr_e( $fieldValue['image'] ); ?>" />
-                        <button data-input="<?php echo $className; ?>" class="simpul_meta_upload button-secondary" type="button">Browse</button><br>
-                        <input placeholder="Link" id="<?php echo $fieldName; ?>[link]" class="regular-text" type="text" name="<?php echo $fieldName; ?>[link]" value="<?php esc_attr_e( $fieldValue['link'] ); ?>" /> Link<br>
-                        <input placeholder="Quote" id="<?php echo $fieldName; ?>[quote]" class="regular-text" type="text" name="<?php echo $fieldName; ?>[quote]" value="<?php esc_attr_e( $fieldValue['quote'] ); ?>" /> Quote
-                    </td>
-                </tr>
-            <?php
-                break;
-            case 'textarea':
-                ?>
-                <tr valign="top"><th scope="row"><?php _e( $this->getLabel($field) . ": ", $this->namespace . '_theme' ); ?></th>
-                    <td>
-                        <?php wp_editor( esc_textarea( $fieldValue ), $className, array('textarea_name' => $fieldName, 'textarea_rows' => 4) ); ?> 
-                    </td>
-                </tr>
-            <?php
-                break;
-            case 'textarealink':
-                ?>
-                <tr valign="top"><th scope="row"><?php _e( $this->getLabel($field) . ": ", $this->namespace . '_theme' ); ?></th>
-                    <td>
-                        <?php wp_editor( $fieldValue['text'], $className, array('textarea_name' => $fieldName . '[text]', 'textarea_rows' => 4, ) ); ?> 
-                        <input placeholder="Link" style="margin-top: 10px;" id="<?php echo $fieldName; ?>[link]" class="regular-text" type="text" name="<php echo $fieldName; ?>[link]" value="<?php esc_attr_e( $fieldValue['link'] ); ?>" /> Link
-                    </td>
-                </tr>
-            <?php
-                break;
-            case 'link':
-                ?>
-                <tr valign="top"><th scope="row"><?php _e( $this->getLabel($field) . ": ", $this->namespace . '_theme' ); ?></th>
-                    <td>
-                        <input id="<?php echo $fieldName; ?>[link]" class="regular-text" type="text" name="<?php echo $fieldName; ?>[link]" value="<?php esc_attr_e( $fieldValue['link'] ); ?>" />
-                        <input id="<?php echo $fieldName; ?>[text]" class="regular-text" type="text" name="<?php echo $fieldName; ?>[text]" value="<?php esc_attr_e( $fieldValue['text'] ); ?>" />
-                    </td>
-                </tr>
-            <?php
-                break;
-        endswitch;
+        endif;
+        return;
     }
+    function setFieldVars($section, $field, $format){
+        $fieldVars = new stdClass;
+        $fieldVars->field = strtolower($field);
+        $fieldVars->section = strtolower($section);
+        $fieldVars->format = strtolower($format);
+        $fieldVars->name = strtolower($this->namespace . '_theme_options[' . $fieldVars->section . '][' . $fieldVars->field . ']');
+        
+        $fieldVars->value = !empty($this->options[$fieldVars->section][$fieldVars->field]) ? $this->options[$fieldVars->section][$fieldVars->field] : '';
+        $fieldVars->id = $this->namespace . '_theme_options_' . $fieldVars->section . '_' . $fieldVars->field;
+        $fieldVars->class = $this->namespace . '-theme_options-' .$fieldVars-> $section . '-' . $fieldVars->field;
+
+        return $fieldVars;
+    }
+    function setArrayFieldVars($section, $field, $format, $i){
+        $fieldVars = new stdClass;
+        $fieldVars->field = strtolower($field);
+        $fieldVars->section = strtolower($section);
+        $fieldVars->format = strtolower($format);
+        $fieldVars->name = strtolower($this->namespace . '_theme_options[' . $fieldVars->section . '][' . $fieldVars->field . '][' . $fieldVars->field . '][' . $i . ']');
+        
+        $fieldVars->value = !empty($this->options[$fieldVars->section][$fieldVars->field][$fieldVars->field][$i]) ? $this->options[$fieldVars->section][$fieldVars->field][$fieldVars->field][$i] : '';
+        $fieldVars->id = $this->namespace . '_theme_options_' . $fieldVars->section . '_' . $fieldVars->field . '_' . $fieldVars->field . '_' . $i;
+        $fieldVars->class = $this->namespace . '-theme_options-' .$fieldVars-> $section . '-' . $fieldVars->field . '-' . $fieldVars->field . '-' . $i;
+
+        return $fieldVars;
+    }
+    function text($field, $name = 'text', $placeholder = 'Text', $description = ''){
+        ?>
+        <input placeholder="<?php echo $placeholder; ?>" id="<?php echo $field->id; ?>_<?php echo $name; ?>" class="regular-text ltr" type="text" name="<?php echo $field->name; ?>[<?php echo $name; ?>]" value="<?php esc_attr_e( $field->value[$name] ); ?>" />
+        <?php
+        if($description): ?><p class="description"><?php echo $description; ?></p><?php endif;
+    }
+    function src($field, $name = 'src', $placeholder = '', $description = ''){
+        $this->text($field, $name, $placeholder); ?>
+        <button data-input="<?php echo $field->id; ?>_<?php echo $name; ?>" class="simpul_meta_upload button-secondary" type="button">Browse</button>
+        <?php if($description) ?><p class="description"><?php echo $description; ?></p><?php
+    }
+    
+    function textarea($field, $name = 'text', $placeholder = '', $description = ''){
+        ?><div style="margin-bottom: 20px;"><?php
+        wp_editor($field->value[$name], $field->id, array('textarea_name' => $field->name . '[' . $name . ']', 'textarea_rows' => 4) );
+        ?></div>
+        <?php if($description) ?><p class="description"><?php echo $description; ?></p><?php
+    }
+    function image($field, $name = 'src'){
+        $this->src($field, $name, 'Image Link', 'Press Browse to find and image or just Insert a Link to an Image');
+    }
+    function label($field){
+        $this->text($field, 'label', 'Label', 'Label');
+    }
+    function link($field){
+        $this->text($field, 'link', 'Link', 'The Link (example: http://mylink.com/mypage');
+        echo '<br>';
+        $this->text($field, 'label', 'Label', 'The Link\'s Label (example: <a href="' .  (!empty($field->value['link']) ? $field->value['link'] : '#') . '" target="_blank">' .  (!empty($field->value['label']) ? $field->value['label'] : 'Click Here!') . '</a>)');    }
+   
+    function imagelink($field){
+        $this->image($field);
+        echo '<br>';
+        $this->link($field);
+    }
+    function textarealink($field){
+        $this->textarea($field);
+        $this->link($field);
+    }
+    function imagelinkquote($field){
+        $this->imagelink($field);
+        $this->text($field, 'quote', 'Quote', 'The Source being Quoted (example:  Martin Luther King)');
+    }
+    function imagelinktextarea($field){
+        $this->imagelink($field);
+        $this->textarea($field, 'text', 'Content', 'HMTL Content that usually sits on top of the Image.');
+    }
+    function slider($field){
+        $this->text($field, 'effect', 'Effect', 'Slide Effect (example: fade,slide)');
+        $this->text($field, 'timing', 'Timing', 'Timing in Seconds (example: 5 would be 5 seconds)');
+        $this->text($field, 'total', 'Total', 'Number of Sliders');
+        if(!empty($field->value['total']) && $field->value['total'] > 0):
+            for($i = 1; $i <= $field->value['total']; $i++):
+                $sliderField = self::setArrayFieldVars($field->section, $field->format, $field->format, $i);
+                ?><h3>Slider <?php echo $i; ?></h3><?php
+                $this->imagelinktextarea($sliderField);
+            endfor;
+        endif;
+    }
+
     function getThemeOptions($section = null){
         if(!empty($section)):
-            $options = get_option( $this->namespace . '_theme_options' );
-            return $options[$section];
+            $this->options = get_option( $this->namespace . '_theme_options' );
+            return $this->options[$section];
         endif;
         return get_option( $this->namespace . '_theme_options' );
     }
