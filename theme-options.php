@@ -2,8 +2,7 @@
 
 $simpulThemeOptions = new SimpulThemeOptions(
     array(
-        'namespace' => 'toddcochran',
-        'sliders' => false,
+        'namespace' => 'sample',
         'sections' => array(
             'front_page' => array(
                 'first_box' => 'imagelink',
