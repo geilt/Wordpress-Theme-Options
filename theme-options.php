@@ -147,13 +147,11 @@ class SimpulThemeOptions {
         $input['sometext'] = wp_filter_nohtml_kses( $input['sometext'] );
 
         // Our select option must actually be in our array of select options
-        if ( ! array_key_exists( $input['selectinput'], $select_options ) )
+        if ( empty($select_options) || !is_array($select_options) || !array_key_exists( $input['selectinput'], $select_options ) )
             $input['selectinput'] = null;
 
         // Our radio option must actually be in our array of radio options
-        if ( ! isset( $input['radioinput'] ) )
-            $input['radioinput'] = null;
-        if ( ! array_key_exists( $input['radioinput'], $radio_options ) )
+        if ( !isset( $input['radioinput']) || empty($radio_options) || !is_array($radio_options)|| !array_key_exists( $input['radioinput'], $radio_options ) )
             $input['radioinput'] = null;
 
         // Say our textarea option must be safe text with the allowed tags for posts
